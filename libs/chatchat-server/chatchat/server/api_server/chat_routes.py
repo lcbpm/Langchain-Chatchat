@@ -70,9 +70,25 @@ async def chat_completions(
     if Settings.model_settings.USE_XINFERENCE:
         from xinference.client import RESTfulClient
         client = RESTfulClient(Settings.model_settings.XINFERENCE_URL)
-        # 直接获取所有已部署的模型
+        # 尝试获取所有已部署的模型
         models = client.list_models()
         logger.info(f"Available models: {models}")
+        
+        # 如果没有可用的模型，尝试部署一个默认的聊天模型
+        if not any(model.get('model_type') == 'LLM' for model in models):
+            logger.info("没有找到已部署的聊天模型，尝试部署默认模型...")
+            try:
+                # 部署默认的聊天模型，这里使用 chatglm3-6b 作为示例
+                model_uid = client.launch_model(
+                    model_name="chatglm3-6b",
+                    model_size_in_billions=6,
+                    model_format="pytorch"
+                )
+                logger.info(f"成功部署默认聊天模型，model_uid: {model_uid}")
+                # 重新获取模型列表
+                models = client.list_models()
+            except Exception as e:
+                logger.error(f"部署默认模型失败: {e}")
         
         # 获取第一个可用的聊天模型
         model_uid = None
