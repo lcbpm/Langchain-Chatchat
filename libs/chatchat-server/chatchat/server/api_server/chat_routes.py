@@ -42,6 +42,7 @@ chat_router.post("/kb_chat", summary="知识库对话")(kb_chat)
 chat_router.post("/file_chat", summary="文件对话")(file_chat)
 
 
+
 @chat_router.post("/chat/completions", summary="兼容 openai 的统一 chat 接口")
 async def chat_completions(
     request: Request,
@@ -63,58 +64,14 @@ async def chat_completions(
     # rich.print(body)
 
     # 当调用本接口且 body 中没有传入 "max_tokens" 参数时, 默认使用配置中定义的值
-    if body.max_tokens in [None, 0]:
+    if body.max_tokens == None:
         body.max_tokens = Settings.model_settings.MAX_TOKENS
-    logger.info(f"USE_XINFERENCE: {Settings.model_settings.USE_XINFERENCE}")
-    # 根据配置决定使用 xinference 还是 OpenAI
-    if Settings.model_settings.USE_XINFERENCE:
-        from xinference.client import RESTfulClient
-        client = RESTfulClient(Settings.model_settings.XINFERENCE_URL)
-        # 尝试获取所有已部署的模型
-        models = client.list_models()
-        logger.info(f"Available models: {models}")
-        
-        # 如果没有可用的模型，尝试部署一个默认的聊天模型
-        if not any(model.get('model_type') == 'LLM' for model in models):
-            logger.info("没有找到已部署的聊天模型，尝试部署默认模型...")
-            try:
-                # 部署默认的聊天模型，这里使用 chatglm3-6b 作为示例
-                model_uid = client.launch_model(
-                    model_name="chatglm3-6b",
-                    model_size_in_billions=6,
-                    model_format="pytorch"
-                )
-                logger.info(f"成功部署默认聊天模型，model_uid: {model_uid}")
-                # 重新获取模型列表
-                models = client.list_models()
-            except Exception as e:
-                logger.error(f"部署默认模型失败: {e}")
-        
-        # 获取第一个可用的聊天模型
-        model_uid = None
-        for model in models:
-            if model.get('model_type') == 'chat':
-                model_uid = model['model_uid']
-                logger.info(f"Using model: {model['model_name']}, uid: {model_uid}")
-                break
-        
-        if not model_uid:
-            logger.error("No available chat model found in xinference")
-            raise ValueError("No available chat model found in xinference")
 
-        # 使用找到的模型进行对话
-        response = await client.chat_completion(
-            model_uid=model_uid,
-            messages=body.messages,
-            max_tokens=body.max_tokens,
-            stream=body.stream
-        )
-        return response
-    else:
-        client = get_OpenAIClient(model_name=body.model, is_async=True)
+    client = get_OpenAIClient(model_name=body.model, is_async=True)
     extra = {**body.model_extra} or {}
     for key in list(extra):
         delattr(body, key)
+
     # check tools & tool_choice in request body
     if isinstance(body.tool_choice, str):
         if t := get_tool(body.tool_choice):
@@ -149,23 +106,19 @@ async def chat_completions(
                 }
             ]
         if tool_input := extra.get("tool_input"):
-            try:
-                message_id = (
-                    add_message_to_db(
-                        chat_type="tool_call",
-                        query=body.messages[-1]["content"],
-                        conversation_id=conversation_id,
-                    )
-                    if conversation_id
-                    else None
+            message_id = (
+                add_message_to_db(
+                    chat_type="tool_call",
+                    query=body.messages[-1]["content"],
+                    conversation_id=conversation_id,
                 )
-            except Exception as e:
-                logger.warning(f"failed to add message to db: {e}")
-                message_id = None
+                if conversation_id
+                else None
+            )
 
             tool_result = await tool.ainvoke(tool_input)
             prompt_template = PromptTemplate.from_template(
-                get_prompt_template("rag", "default"), template_format="jinja2"
+                get_prompt_template("llm_model", "rag"), template_format="jinja2"
             )
             body.messages[-1]["content"] = prompt_template.format(
                 context=tool_result, question=body.messages[-1]["content"]
@@ -200,19 +153,15 @@ async def chat_completions(
 
     # agent chat with tool calls
     if body.tools:
-        try:
-            message_id = (
-                add_message_to_db(
-                    chat_type="agent_chat",
-                    query=body.messages[-1]["content"],
-                    conversation_id=conversation_id,
-                )
-                if conversation_id
-                else None
+        message_id = (
+            add_message_to_db(
+                chat_type="agent_chat",
+                query=body.messages[-1]["content"],
+                conversation_id=conversation_id,
             )
-        except Exception as e:
-            logger.warning(f"failed to add message to db: {e}")
-            message_id = None
+            if conversation_id
+            else None
+        )
 
         chat_model_config = {}  # TODO: 前端支持配置模型
         tool_names = [x["function"]["name"] for x in body.tools]
@@ -242,7 +191,7 @@ async def chat_completions(
                 else None
             )
         except Exception as e:
-            logger.warning(f"failed to add message to db: {e}")
+            logger.error(f"failed to add message to db")
             message_id = None
 
         extra_json = {
