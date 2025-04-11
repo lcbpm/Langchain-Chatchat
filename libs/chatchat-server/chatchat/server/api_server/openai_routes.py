@@ -19,7 +19,6 @@ from chatchat.server.utils import get_config_platforms, get_model_info, get_Open
 from chatchat.utils import build_logger
 
 from .api_schemas import *
-
 logger = build_logger()
 
 

@@ -65,12 +65,40 @@ async def chat_completions(
     # 当调用本接口且 body 中没有传入 "max_tokens" 参数时, 默认使用配置中定义的值
     if body.max_tokens in [None, 0]:
         body.max_tokens = Settings.model_settings.MAX_TOKENS
+    logger.info(f"USE_XINFERENCE: {Settings.model_settings.USE_XINFERENCE}")
+    # 根据配置决定使用 xinference 还是 OpenAI
+    if Settings.model_settings.USE_XINFERENCE:
+        from xinference.client import RESTfulClient
+        client = RESTfulClient(Settings.model_settings.XINFERENCE_URL)
+        # 直接获取所有已部署的模型
+        models = client.list_models()
+        logger.info(f"Available models: {models}")
+        
+        # 获取第一个可用的聊天模型
+        model_uid = None
+        for model in models:
+            if model.get('model_type') == 'chat':
+                model_uid = model['model_uid']
+                logger.info(f"Using model: {model['model_name']}, uid: {model_uid}")
+                break
+        
+        if not model_uid:
+            logger.error("No available chat model found in xinference")
+            raise ValueError("No available chat model found in xinference")
 
-    client = get_OpenAIClient(model_name=body.model, is_async=True)
+        # 使用找到的模型进行对话
+        response = await client.chat_completion(
+            model_uid=model_uid,
+            messages=body.messages,
+            max_tokens=body.max_tokens,
+            stream=body.stream
+        )
+        return response
+    else:
+        client = get_OpenAIClient(model_name=body.model, is_async=True)
     extra = {**body.model_extra} or {}
     for key in list(extra):
         delattr(body, key)
-
     # check tools & tool_choice in request body
     if isinstance(body.tool_choice, str):
         if t := get_tool(body.tool_choice):

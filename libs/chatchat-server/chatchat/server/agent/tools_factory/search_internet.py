@@ -6,7 +6,7 @@ from langchain.utilities.bing_search import BingSearchAPIWrapper
 from langchain.utilities.duckduckgo_search import DuckDuckGoSearchAPIWrapper
 from langchain.utilities.searx_search import SearxSearchWrapper
 from markdownify import markdownify
-from strsimpy.normalized_levenshtein import NormalizedLevenshtein
+from rapidfuzz import fuzz
 
 from chatchat.settings import Settings
 from chatchat.server.pydantic_v1 import Field
@@ -38,11 +38,7 @@ def duckduckgo_search(text, config, top_k:int):
     return search.results(text, top_k)
 
 
-def metaphor_search(
-    text: str,
-    config: dict,
-    top_k:int
-) -> List[Dict]:
+def metaphor_search(text: str, config: dict, top_k:int) -> List[Dict]:
     from metaphor_python import Metaphor
 
     client = Metaphor(config["metaphor_api_key"])
@@ -62,9 +58,9 @@ def metaphor_search(
         )
         splitted_docs = text_splitter.split_documents(docs)
         if len(splitted_docs) > top_k:
-            normal = NormalizedLevenshtein()
+            # 使用 rapidfuzz 替代 strsimpy
             for x in splitted_docs:
-                x.metadata["score"] = normal.similarity(text, x.page_content)
+                x.metadata["score"] = fuzz.ratio(text, x.page_content) / 100.0
             splitted_docs.sort(key=lambda x: x.metadata["score"], reverse=True)
             splitted_docs = splitted_docs[: top_k]
 

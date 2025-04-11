@@ -9,7 +9,6 @@ from streamlit_chatbox import *
 from streamlit_extras.bottom_container import bottom
 
 from chatchat.settings import Settings
-from chatchat.server.knowledge_base.utils import LOADER_DICT
 from chatchat.server.utils import get_config_models, get_config_platforms, get_default_llm, api_address
 from chatchat.webui_pages.dialogue.dialogue import (save_session, restore_session, rerun,
                                                     get_messages_history, upload_temp_docs,
@@ -255,3 +254,16 @@ def kb_chat(api: ApiRequest):
     )
 
     # st.write(chat_box.history)
+
+# 替换为自定义定义:
+LOADER_DICT = {
+    "txt": "文本文件",
+    "pdf": "PDF文件",
+    "docx": "Word文档",
+    "pptx": "PowerPoint演示文稿",
+    "xlsx": "Excel表格",
+    "csv": "CSV表格",
+    "md": "Markdown文件",
+    "json": "JSON文件",
+    "html": "HTML文件"
+}
