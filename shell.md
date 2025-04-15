@@ -23,3 +23,9 @@ activate_venv .venv
 
 # 激活 conda 环境
 activate_conda base
+
+### 更新
+pip install -e .
+poetry install
+### 刷新libs
+poetry add ./libs/chatchat-server/

@@ -61,7 +61,8 @@ streamlit-extras = "0.4.2"
 streamlit-paste-button = "^0.1.2"
 streamlit-aggrid = "1.0.5"
 xinference-client = "^1.4.1"  # 回退到稳定版本
-xinference = "^1.4.1"  # 回退到稳定版本
+xinference = "<1.4.1"  # 回退到稳定版本
+langchain-chatchat = {path = "libs/chatchat-server"}
 
 [[tool.poetry.source]]
 name = "aliyun"

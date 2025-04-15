@@ -24,6 +24,7 @@ def create_kb(
     kb_info: str = Body("", description="知识库内容简介，用于Agent选择知识库。"),
     embed_model: str = Body(get_default_embedding()),
 ) -> BaseResponse:
+    logger.info(f"create_kb----info: {knowledge_base_name}, {vector_store_type}, {embed_model}")
     # Create selected knowledge base
     if not validate_kb_name(knowledge_base_name):
         return BaseResponse(code=403, msg="Don't attack me")

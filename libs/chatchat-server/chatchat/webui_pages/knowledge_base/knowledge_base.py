@@ -139,6 +139,7 @@ def knowledge_base_page(api: ApiRequest, is_lite: bool = None):
             elif embed_model is None:
                 st.error(f"请选择Embedding模型！")
             else:
+                logger.info(f"create_knowledge_base----info: {kb_name}, {vs_type}, {embed_model}")  
                 ret = api.create_knowledge_base(
                     knowledge_base_name=kb_name,
                     vector_store_type=vs_type,

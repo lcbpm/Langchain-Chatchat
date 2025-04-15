@@ -31,11 +31,14 @@ class ApiRequest:
         self,
         base_url: str = api_address(),
         timeout: float = Settings.basic_settings.HTTPX_DEFAULT_TIMEOUT,
+        # proxies: str = None,
     ):
         self.base_url = base_url
         self.timeout = timeout
         self._use_async = False
         self._client = None
+        # self.proxies = proxies  # 新增：保存 proxies 参数
+
 
     @property
     def client(self):
@@ -53,6 +56,8 @@ class ApiRequest:
         stream: bool = False,
         **kwargs: Any,
     ) -> Union[httpx.Response, Iterator[httpx.Response], None]:
+        kwargs = {k: v for k, v in kwargs.items() if k != 'proxies'}
+
         while retry > 0:
             try:
                 if stream:
@@ -73,9 +78,11 @@ class ApiRequest:
         stream: bool = False,
         **kwargs: Any,
     ) -> Union[httpx.Response, Iterator[httpx.Response], None]:
+        kwargs = {k: v for k, v in kwargs.items() if k != 'proxies'}
+
         while retry > 0:
             try:
-                # print(kwargs)
+                logger.info(f"post--info: {kwargs}")
                 if stream:
                     return self.client.stream(
                         "POST", url, data=data, json=json, **kwargs
@@ -396,6 +403,7 @@ class ApiRequest:
         """
         对应api.py/knowledge_base/create_knowledge_base接口
         """
+        logger.info(f"create_knowledge_base----info: {knowledge_base_name}, {vector_store_type}, {embed_model},{self}")
         data = {
             "knowledge_base_name": knowledge_base_name,
             "vector_store_type": vector_store_type,
