@@ -29,3 +29,21 @@ pip install -e .
 poetry install
 ### 刷新libs
 poetry add ./libs/chatchat-server/
+
+
+# 创建虚拟环境
+python -m venv myenv
+
+# 激活虚拟环境
+# Windows
+myenv\Scripts\activate
+# Linux/macOS
+source myenv/bin/activate
+
+# 退出虚拟环境
+deactivate
+
+
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+pip config set global.extra-index-url "https://mirrors.aliyun.com/pypi/simple/ https://pypi.mirrors.ustc.edu.cn/simple/ https://repo.huaweicloud.com/repository/pypi/simple https://pypi.doubanio.com/simple/"
+pip config set global.trusted-host "pypi.tuna.tsinghua.edu.cn mirrors.aliyun.com pypi.mirrors.ustc.edu.cn repo.huaweicloud.com pypi.doubanio.com"
