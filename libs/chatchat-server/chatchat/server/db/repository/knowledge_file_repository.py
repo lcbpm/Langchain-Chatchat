@@ -1,8 +1,12 @@
 from typing import Dict, List
-from chatchat.server.db.models import KnowledgeBase, KnowledgeFile
-from chatchat.server.db.models.file_doc_model import FileDocModel
+
+from chatchat.server.db.models.knowledge_base_model import KnowledgeBaseModel
+from chatchat.server.db.models.knowledge_file_model import (
+    FileDocModel,
+    KnowledgeFileModel,
+)
 from chatchat.server.db.session import with_session
-from chatchat.server.knowledge_base.utils import KnowledgeFileObj
+from chatchat.server.knowledge_base.utils import KnowledgeFile
 
 
 @with_session
@@ -88,8 +92,8 @@ def add_docs_to_db(session, kb_name: str, file_name: str, doc_infos: List[Dict])
 @with_session
 def count_files_from_db(session, kb_name: str) -> int:
     return (
-        session.query(KnowledgeFile)
-        .filter(KnowledgeFile.kb_name.ilike(kb_name))
+        session.query(KnowledgeFileModel)
+        .filter(KnowledgeFileModel.kb_name.ilike(kb_name))
         .count()
     )
 
@@ -97,8 +101,8 @@ def count_files_from_db(session, kb_name: str) -> int:
 @with_session
 def list_files_from_db(session, kb_name):
     files = (
-        session.query(KnowledgeFile)
-        .filter(KnowledgeFile.kb_name.ilike(kb_name))
+        session.query(KnowledgeFileModel)
+        .filter(KnowledgeFileModel.kb_name.ilike(kb_name))
         .all()
     )
     docs = [f.file_name for f in files]
@@ -108,18 +112,19 @@ def list_files_from_db(session, kb_name):
 @with_session
 def add_file_to_db(
     session,
-    kb_file: KnowledgeFileObj,  # 修改类型标注
+    kb_file: KnowledgeFile,
     docs_count: int = 0,
     custom_docs: bool = False,
-    doc_infos: List[Dict] = [],
+    doc_infos: List[Dict] = [],  # 形式：[{"id": str, "metadata": dict}, ...]
 ):
-    kb = session.query(KnowledgeBase).filter_by(kb_name=kb_file.kb_name).first()
+    kb = session.query(KnowledgeBaseModel).filter_by(kb_name=kb_file.kb_name).first()
     if kb:
-        existing_file: KnowledgeFile = (  # 修改类型标注
-            session.query(KnowledgeFile)
+        # 如果已经存在该文件，则更新文件信息与版本号
+        existing_file: KnowledgeFileModel = (
+            session.query(KnowledgeFileModel)
             .filter(
-                KnowledgeFile.kb_name.ilike(kb_file.kb_name),
-                KnowledgeFile.file_name.ilike(kb_file.filename),
+                KnowledgeFileModel.kb_name.ilike(kb_file.kb_name),
+                KnowledgeFileModel.file_name.ilike(kb_file.filename),
             )
             .first()
         )
@@ -134,7 +139,7 @@ def add_file_to_db(
             existing_file.file_version += 1
         # 否则，添加新文件
         else:
-            new_file = KnowledgeFile(
+            new_file = KnowledgeFileModel(
                 file_name=kb_file.filename,
                 file_ext=kb_file.ext,
                 kb_name=kb_file.kb_name,
@@ -156,10 +161,10 @@ def add_file_to_db(
 @with_session
 def delete_file_from_db(session, kb_file: KnowledgeFile):
     existing_file = (
-        session.query(KnowledgeFile)
+        session.query(KnowledgeFileModel)
         .filter(
-            KnowledgeFile.file_name.ilike(kb_file.filename),
-            KnowledgeFile.kb_name.ilike(kb_file.kb_name),
+            KnowledgeFileModel.file_name.ilike(kb_file.filename),
+            KnowledgeFileModel.kb_name.ilike(kb_file.kb_name),
         )
         .first()
     )
@@ -169,8 +174,8 @@ def delete_file_from_db(session, kb_file: KnowledgeFile):
         session.commit()
 
         kb = (
-            session.query(KnowledgeBase)
-            .filter(KnowledgeBase.kb_name.ilike(kb_file.kb_name))
+            session.query(KnowledgeBaseModel)
+            .filter(KnowledgeBaseModel.kb_name.ilike(kb_file.kb_name))
             .first()
         )
         if kb:
@@ -181,15 +186,15 @@ def delete_file_from_db(session, kb_file: KnowledgeFile):
 
 @with_session
 def delete_files_from_db(session, knowledge_base_name: str):
-    session.query(KnowledgeFile).filter(
-        KnowledgeFile.kb_name.ilike(knowledge_base_name)
+    session.query(KnowledgeFileModel).filter(
+        KnowledgeFileModel.kb_name.ilike(knowledge_base_name)
     ).delete(synchronize_session=False)
     session.query(FileDocModel).filter(
         FileDocModel.kb_name.ilike(knowledge_base_name)
     ).delete(synchronize_session=False)
     kb = (
-        session.query(KnowledgeBase)
-        .filter(KnowledgeBase.kb_name.ilike(knowledge_base_name))
+        session.query(KnowledgeBaseModel)
+        .filter(KnowledgeBaseModel.kb_name.ilike(knowledge_base_name))
         .first()
     )
     if kb:
@@ -202,10 +207,10 @@ def delete_files_from_db(session, knowledge_base_name: str):
 @with_session
 def file_exists_in_db(session, kb_file: KnowledgeFile):
     existing_file = (
-        session.query(KnowledgeFile)
+        session.query(KnowledgeFileModel)
         .filter(
-            KnowledgeFile.file_name.ilike(kb_file.filename),
-            KnowledgeFile.kb_name.ilike(kb_file.kb_name),
+            KnowledgeFileModel.file_name.ilike(kb_file.filename),
+            KnowledgeFileModel.kb_name.ilike(kb_file.kb_name),
         )
         .first()
     )
@@ -214,11 +219,11 @@ def file_exists_in_db(session, kb_file: KnowledgeFile):
 
 @with_session
 def get_file_detail(session, kb_name: str, filename: str) -> dict:
-    file: KnowledgeFile = (
-        session.query(KnowledgeFile)
+    file: KnowledgeFileModel = (
+        session.query(KnowledgeFileModel)
         .filter(
-            KnowledgeFile.file_name.ilike(filename),
-            KnowledgeFile.kb_name.ilike(kb_name),
+            KnowledgeFileModel.file_name.ilike(filename),
+            KnowledgeFileModel.kb_name.ilike(kb_name),
         )
         .first()
     )

@@ -3,7 +3,7 @@ from sqlalchemy import JSON, Boolean, Column, DateTime, Float, Integer, String, 
 from chatchat.server.db.base import Base
 
 
-class KnowledgeFile(Base):
+class KnowledgeFileModel(Base):
     """
     知识文件模型
     """

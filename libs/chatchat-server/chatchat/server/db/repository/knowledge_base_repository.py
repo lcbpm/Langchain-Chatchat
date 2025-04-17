@@ -1,20 +1,24 @@
-from chatchat.server.db.models import KnowledgeBase, KnowledgeFile
+from chatchat.server.db.models.knowledge_base_model import (
+    KnowledgeBaseModel,
+    KnowledgeBaseSchema,
+)
 from chatchat.server.db.session import with_session
 
 
 @with_session
 def add_kb_to_db(session, kb_name, kb_info, vs_type, embed_model):
+    # 创建知识库实例
     kb = (
-        session.query(KnowledgeBase)
-        .filter(KnowledgeBase.kb_name.ilike(kb_name))
+        session.query(KnowledgeBaseModel)
+        .filter(KnowledgeBaseModel.kb_name.ilike(kb_name))
         .first()
     )
     if not kb:
-        kb = KnowledgeBase(
+        kb = KnowledgeBaseModel(
             kb_name=kb_name, kb_info=kb_info, vs_type=vs_type, embed_model=embed_model
         )
         session.add(kb)
-    else:
+    else:  # update kb with new vs_type and embed_model
         kb.kb_info = kb_info
         kb.vs_type = vs_type
         kb.embed_model = embed_model
@@ -24,8 +28,8 @@ def add_kb_to_db(session, kb_name, kb_info, vs_type, embed_model):
 @with_session
 def list_kbs_from_db(session, min_file_count: int = -1):
     kbs = (
-        session.query(KnowledgeBase)
-        .filter(KnowledgeBase.file_count > min_file_count)
+        session.query(KnowledgeBaseModel)
+        .filter(KnowledgeBaseModel.file_count > min_file_count)
         .all()
     )
     kbs = [KnowledgeBaseSchema.model_validate(kb) for kb in kbs]
@@ -35,8 +39,8 @@ def list_kbs_from_db(session, min_file_count: int = -1):
 @with_session
 def kb_exists(session, kb_name):
     kb = (
-        session.query(KnowledgeBase)
-        .filter(KnowledgeBase.kb_name.ilike(kb_name))
+        session.query(KnowledgeBaseModel)
+        .filter(KnowledgeBaseModel.kb_name.ilike(kb_name))
         .first()
     )
     status = True if kb else False
@@ -46,8 +50,8 @@ def kb_exists(session, kb_name):
 @with_session
 def load_kb_from_db(session, kb_name):
     kb = (
-        session.query(KnowledgeBase)
-        .filter(KnowledgeBase.kb_name.ilike(kb_name))
+        session.query(KnowledgeBaseModel)
+        .filter(KnowledgeBaseModel.kb_name.ilike(kb_name))
         .first()
     )
     if kb:
@@ -60,8 +64,8 @@ def load_kb_from_db(session, kb_name):
 @with_session
 def delete_kb_from_db(session, kb_name):
     kb = (
-        session.query(KnowledgeBase)
-        .filter(KnowledgeBase.kb_name.ilike(kb_name))
+        session.query(KnowledgeBaseModel)
+        .filter(KnowledgeBaseModel.kb_name.ilike(kb_name))
         .first()
     )
     if kb:
@@ -71,9 +75,9 @@ def delete_kb_from_db(session, kb_name):
 
 @with_session
 def get_kb_detail(session, kb_name: str) -> dict:
-    kb: KnowledgeBase = (
-        session.query(KnowledgeBase)
-        .filter(KnowledgeBase.kb_name.ilike(kb_name))
+    kb: KnowledgeBaseModel = (
+        session.query(KnowledgeBaseModel)
+        .filter(KnowledgeBaseModel.kb_name.ilike(kb_name))
         .first()
     )
     if kb:

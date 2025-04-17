@@ -8,7 +8,7 @@ from langchain.docstore.document import Document
 
 from chatchat.settings import Settings
 from chatchat.utils import build_logger
-from chatchat.server.db.models import KnowledgeBaseSchema
+from chatchat.server.db.models.knowledge_base_model import KnowledgeBaseSchema
 from chatchat.server.db.repository.knowledge_base_repository import (
     add_kb_to_db,
     delete_kb_from_db,

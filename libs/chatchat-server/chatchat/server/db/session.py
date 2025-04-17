@@ -4,26 +4,6 @@ from functools import wraps
 from sqlalchemy.orm import Session
 
 from chatchat.server.db.base import SessionLocal
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.ext.declarative import declarative_base
-from chatchat.settings import DBSettings
-
-Base = declarative_base()
-
-def init_database():
-    """初始化数据库，创建所有表"""
-    engine = create_engine(DBSettings().SQLALCHEMY_DATABASE_URI)
-    Base.metadata.create_all(engine)
-
-def get_session():
-    """获取数据库会话"""
-    engine = create_engine(DBSettings().SQLALCHEMY_DATABASE_URI)
-    session_factory = sessionmaker(bind=engine)
-    return scoped_session(session_factory)
-
-# 确保在应用启动时调用初始化
-init_database()
 
 
 @contextmanager
