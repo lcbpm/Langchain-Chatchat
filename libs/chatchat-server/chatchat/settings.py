@@ -137,7 +137,7 @@ class BasicSettings(BaseFileSettings):
         Base.metadata.create_all(engine)
 
 
-class KBSettings(BaseFileSettings):
+class KBSettings(BasicSettings):
     """知识库相关配置"""
 
     model_config = SettingsConfigDict(yaml_file=CHATCHAT_ROOT / "kb_settings.yaml")

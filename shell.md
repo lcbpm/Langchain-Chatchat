@@ -47,3 +47,18 @@ deactivate
 pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 pip config set global.extra-index-url "https://mirrors.aliyun.com/pypi/simple/ https://pypi.mirrors.ustc.edu.cn/simple/ https://repo.huaweicloud.com/repository/pypi/simple https://pypi.doubanio.com/simple/"
 pip config set global.trusted-host "pypi.tuna.tsinghua.edu.cn mirrors.aliyun.com pypi.mirrors.ustc.edu.cn repo.huaweicloud.com pypi.doubanio.com"
+
+# 基本卸载命令
+pip uninstall -y jiter
+
+# 确保以正确的架构模式运行（如果在 ARM64 Mac 上）
+arch -arm64 pip uninstall -y jiter
+
+arch -arm64 pip install jiter
+
+
+# 以 arm64 模式安装 python 包
+arch -arm64 pip install numpy
+
+# 以 x86_64 模式运行程序
+arch -x86_64 python script.py
