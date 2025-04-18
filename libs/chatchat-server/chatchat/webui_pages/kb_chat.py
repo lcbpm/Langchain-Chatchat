@@ -14,7 +14,7 @@ from chatchat.webui_pages.dialogue.dialogue import (save_session, restore_sessio
                                                     get_messages_history, upload_temp_docs,
                                                     add_conv, del_conv, clear_conv)
 from chatchat.webui_pages.utils import *
-
+from chatchat.server.knowledge_base.utils import LOADER_DICT
 
 chat_box = ChatBox(assistant_avatar=get_img_base64("chatchat_icon_blue_square_v2.png"))
 
@@ -254,16 +254,3 @@ def kb_chat(api: ApiRequest):
     )
 
     # st.write(chat_box.history)
-
-# 替换为自定义定义:
-LOADER_DICT = {
-    "txt": "文本文件",
-    "pdf": "PDF文件",
-    "docx": "Word文档",
-    "pptx": "PowerPoint演示文稿",
-    "xlsx": "Excel表格",
-    "csv": "CSV表格",
-    "md": "Markdown文件",
-    "json": "JSON文件",
-    "html": "HTML文件"
-}
