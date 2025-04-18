@@ -62,3 +62,9 @@ arch -arm64 pip install numpy
 
 # 以 x86_64 模式运行程序
 arch -x86_64 python script.py
+
+清理缓存
+pip cache purge
+
+pip install git+https://github.com/aio-libs/frozenlist.git
+pip install 本地路径
